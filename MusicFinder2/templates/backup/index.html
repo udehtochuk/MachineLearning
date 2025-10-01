@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Music Similarity Finder</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .upload-box { border: 2px dashed #ccc; padding: 20px; text-align: center; margin-bottom: 20px; }
+        .or-divider { text-align: center; margin: 20px 0; font-weight: bold; }
+        .youtube-input { width: 100%; padding: 10px; margin-bottom: 20px; }
+        button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+    </style>
+</head>
+<body>
+    <h1>Music Similarity Finder</h1>
+    <p>Upload an audio file or provide a YouTube URL to find similar songs based on acoustic features.</p>
+    
+    <form method="post" enctype="multipart/form-data">
+        <div class="upload-box">
+            <h3>Upload Audio File</h3>
+            <input type="file" name="file" accept=".mp3,.wav,.ogg">
+            <p>Supported formats: MP3, WAV, OGG</p>
+        </div>
+        
+        <div class="or-divider">OR</div>
+        
+        <div>
+            <h3>Enter YouTube URL</h3>
+            <input type="text" class="youtube-input" name="youtube_url" placeholder="https://www.youtube.com/watch?v=...">
+        </div>
+        
+        <button type="submit">Find Similar Songs</button>
+    </form>
+</body>
+</html>

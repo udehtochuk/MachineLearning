@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Results - Music Similarity Finder</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .query-info { margin-bottom: 30px; }
+        .results-list { margin-top: 30px; }
+        .song-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; }
+        .similarity-score { color: #4CAF50; font-weight: bold; }
+        .feature-plot { max-width: 100%; margin-top: 30px; }
+        audio { width: 100%; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Similar Songs Results</h1>
+    
+    <div class="query-info">
+        <h2>Your Query:</h2>
+        {% if query_type == 'file' %}
+            <audio controls>
+                <source src="{{ url_for('uploaded_file', filename=query_path.split('\\')[-1]) }}" type="audio/mp3">
+                Your browser does not support the audio element.
+            </audio>
+        {% else %}
+            <p>YouTube audio extracted successfully.</p>
+            <audio controls>
+                <source src="{{ url_for('uploaded_file', filename=query_path.split('\\')[-1]) }}" type="audio/mp3">
+                Your browser does not support the audio element.
+            </audio>
+        {% endif %}
+    </div>
+    
+    <div class="results-list">
+        <h2>Top Similar Songs:</h2>
+        {% if not similar_songs %}
+            <p>No similar songs found in the dataset.</p>
+        {% else %}
+            {% for song in similar_songs %}
+                <div class="song-card">
+                    <h3>{{ song.song.title }} by {{ song.song.artist }}</h3>
+                    <p>Similarity score: <span class="similarity-score">{{ "%.2f"|format(song.similarity * 100) }}%</span></p>
+                    <p>Distance score: {{ "%.2f"|format(song.distance) }}</p>
+                    <audio controls>
+                        <source src="{{ url_for('dataset_file', filename=song.song.path.split('\\')[-1]) }}" type="audio/mp3">
+                        Your browser does not support the audio element.
+                    </audio>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+    
+    {% if feature_plot %}
+    <div class="feature-comparison">
+        <h2>Feature Comparison with Top Match</h2>
+        <img src="{{ url_for('static', filename='feature_comparison.png') }}" alt="Feature Comparison" class="feature-plot">
+    </div>
+    {% endif %}
+    
+    <p><a href="{{ url_for('index') }}">Search again</a></p>
+</body>
+</html>

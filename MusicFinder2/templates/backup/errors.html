@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Error - Music Similarity Finder</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .error-box { background-color: #ffebee; border: 1px solid #f44336; padding: 20px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Error</h1>
+    
+    <div class="error-box">
+        <p>{{ message }}</p>
+    </div>
+    
+    <p><a href="{{ url_for('index') }}">Try again</a></p>
+</body>
+</html>

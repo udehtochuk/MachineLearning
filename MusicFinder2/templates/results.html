@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results - Music Similarity Finder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #4285F4;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        .query-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .result-item {
+            display: flex;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+        }
+        .result-info {
+            flex: 1;
+            padding: 0 20px;
+        }
+        .result-audio {
+            flex: 2;
+        }
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .similarity-score {
+            font-weight: 500;
+            color: #34A853;
+        }
+        .distance-score {
+            font-weight: 500;
+            color: #EA4335;
+        }
+        .visualizations {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .visualization {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+        }
+        .visualization img {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #4285F4;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #3367D6;
+        }
+        .btn-secondary {
+            background-color: #f1f1f1;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background-color: #ddd;
+        }
+        .feature-weights {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .feature-weights h3 {
+            margin-top: 0;
+        }
+        .weight-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        .weight-item {
+            background: #eee;
+            padding: 8px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Similarity Results</h1>
+    
+    <div class="card">
+        <div class="query-section">
+            <h2>Your Query</h2>
+            <audio controls>
+                <source src="{{ url_for('static_file', filename='uploads/' + query) }}" type="audio/mp3">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+        
+        <div class="feature-weights">
+            <h3>Feature Weights Used</h3>
+            <div class="weight-list">
+                <div class="weight-item">MFCCs: {{ weights.w_mfcc }}</div>
+                <div class="weight-item">Chroma: {{ weights.w_chroma }}</div>
+                <div class="weight-item">Tempo: {{ weights.w_tempo }}</div>
+                <div class="weight-item">Zero Crossing: {{ weights.w_zcr }}</div>
+                <div class="weight-item">RMS Energy: {{ weights.w_rms }}</div>
+                <div class="weight-item">Spectral Centroid: {{ weights.w_centroid }}</div>
+                <div class="weight-item">Spectral Rolloff: {{ weights.w_rolloff }}</div>
+                <div class="weight-item">Spectral Bandwidth: {{ weights.w_bandwidth }}</div>
+                <div class="weight-item">Pitch: {{ weights.w_pitch }}</div>
+            </div>
+        </div>
+        
+        <h2>Top Matches</h2>
+        {% for result in results %}
+        <div class="result-item">
+            <div class="result-info">
+                <h3>{{ result.filename }}</h3>
+                <p>Similarity: <span class="similarity-score">{{ "%.2f"|format(result.similarity * 100) }}%</span></p>
+                <p>Distance: <span class="distance-score">{{ "%.2f"|format(result.distance) }}</span></p>
+            </div>
+            <div class="result-audio">
+                <audio controls>
+                    <source src="{{ url_for('static_file', filename='dataset/' + result.filename) }}" type="audio/mp3">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+        </div>
+        {% endfor %}
+        
+        <div class="visualizations">
+            <div class="visualization">
+                <h3>Feature Comparison</h3>
+                <img src="{{ url_for('static_file', filename='plots/' + plot_id + '_bar.png') }}" alt="Feature Comparison">
+            </div>
+            <div class="visualization">
+                <h3>Radar Chart</h3>
+                <img src="{{ url_for('static_file', filename='plots/' + plot_id + '_radar.png') }}" alt="Radar Chart">
+            </div>
+            <div class="visualization">
+                <h3>PCA Projection</h3>
+                <img src="{{ url_for('static_file', filename='plots/' + plot_id + '_pca.png') }}" alt="PCA Projection">
+            </div>
+            <div class="visualization">
+                <h3>Similarity Matrix Heatmap</h3>
+                <img src="{{ url_for('static_file', filename='plots/' + plot_id + '_heatmap.png') }}" alt="Heatmap">
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="{{ url_for('download_csv') }}" class="btn btn-primary">Download Features CSV</a>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">New Search</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Similarity Finder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            color: #4285F4;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .upload-box {
+            text-align: center;
+            padding: 30px;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background: #f9f9f9;
+        }
+
+        .weight-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .weight-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4285F4;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .weight-value {
+            display: inline-block;
+            width: 40px;
+            text-align: center;
+            margin-left: 10px;
+        }
+
+        button {
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto 0;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #3367D6;
+        }
+
+        .file-input {
+            margin: 15px 0;
+        }
+
+        .info-text {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .spinner {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner div {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #4285F4;
+            border-top: 4px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Music Similarity Finder</h1>
+
+    <div class="card">
+        <p class="info-text">
+            Upload an audio file or provide a YouTube URL to find similar songs based on acoustic features.
+            Adjust the feature weights to customize your search.
+        </p>
+
+        <form id="similarity-form" method="post" enctype="multipart/form-data">
+            <div class="upload-box">
+                <h3>Upload Audio File</h3>
+                <div class="file-input">
+                    <input type="file" name="file" accept=".mp3,.wav">
+                </div>
+                <p>Supported formats: MP3, WAV</p>
+            </div>
+
+            <div class="upload-box">
+                <h3>Or Paste YouTube URL</h3>
+                <input type="url" name="youtube_url" placeholder="https://www.youtube.com/watch?v=..." style="width: 100%; padding: 10px; margin-top: 10px;">
+                <p>Downloads audio directly from YouTube</p>
+            </div>
+
+            <h3>Feature Weights</h3>
+            <p>Adjust the importance of each feature in the similarity calculation:</p>
+
+            <div class="weight-controls">
+                {% for name, label in {
+                    'w_mfcc': 'MFCCs',
+                    'w_chroma': 'Chroma',
+                    'w_tempo': 'Tempo',
+                    'w_zcr': 'Zero Crossing',
+                    'w_rms': 'RMS Energy',
+                    'w_centroid': 'Spectral Centroid',
+                    'w_rolloff': 'Spectral Rolloff',
+                    'w_bandwidth': 'Spectral Bandwidth',
+                    'w_pitch': 'Pitch'
+                }.items() %}
+                <div class="weight-group">
+                    <label for="{{ name }}">{{ label }} <span class="weight-value" id="{{ name }}_val">{{ weights[name] }}</span></label>
+                    <input type="range" id="{{ name }}" name="{{ name }}" min="0" max="2" step="0.1" value="{{ weights[name] }}" oninput="updateValue('{{ name }}')">
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="submit" id="submit-button">Find Similar Songs</button>
+
+            <div class="spinner" id="spinner">
+                <div></div>
+                <p style="margin-top: 10px;">Processing... Please wait</p>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function updateValue(id) {
+            const slider = document.getElementById(id);
+            const valueDisplay = document.getElementById(id + '_val');
+            valueDisplay.textContent = slider.value;
+        }
+
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            updateValue(slider.id);
+        });
+
+        document.getElementById('similarity-form').addEventListener('submit', function(e) {
+            const fileInput = document.querySelector('input[name="file"]');
+            const youtubeInput = document.querySelector('input[name="youtube_url"]');
+
+            if (!fileInput.value && !youtubeInput.value.trim()) {
+                e.preventDefault();
+                alert("Please upload a file or enter a YouTube URL.");
+                return;
+            }
+
+            document.getElementById('submit-button').disabled = true;
+            document.getElementById('submit-button').textContent = 'Processing...';
+            document.getElementById('spinner').style.display = 'block';
+        });
+    </script>
+</body>
+</html>
